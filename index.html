@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anil Diagnostics – Billing System</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- jsPDF & AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+    }
+    body {
+      background: linear-gradient(135deg, #f1f5f9 0%, #c7d2fe 100%);
+    }
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    #testTable input[type="number"] {
+      font-size: 16px !important;
+    }
+    #testTable th, #testTableScroll td {
+      width: 1%;
+      white-space: nowrap;
+    }
+    #testTableScroll table {
+      table-layout: fixed;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: none; } }
+    .animate-fadein { animation: fadein 0.4s; }
+    @keyframes fadeout { to { opacity: 0; transform: translateX(40px);} }
+    .animate-fadeout { animation: fadeout 0.3s forwards; }
+    #pdfModal {
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="w-full max-w-4xl mx-auto overflow-x-auto flex flex-col gap-4 mt-4">
+
+    <header class="text-center mb-0">
+      <h1 id="appTitle" class="text-4xl font-extrabold text-indigo-700 tracking-tight drop-shadow-sm">Anil Diagnostics</h1>
+      <p class="text-lg text-gray-600 font-medium tracking-wide">Billing System</p>
+      <!-- Hidden Test Mode Button -->
+      <button id="testModeBtn" class="hidden">Activate Test Mode</button>
+      <!-- Toast notification near table -->
+      <div id="toast" class="mx-auto mb-2 bg-emerald-600 text-white px-3 py-1 rounded-full shadow z-50 transition-opacity opacity-0 pointer-events-none" style="max-width:300px;word-break:break-word;font-size:15px;"></div>
+    </header>
+
+    <main class="grid md:grid-cols-2 gap-2">
+      <!-- Patient Card -->
+      <section class="bg-white rounded-2xl shadow-xl p-4 flex flex-col gap-3 border border-slate-200 w-full max-w-lg mx-auto">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-1 flex items-center gap-2">
+          <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          Patient Information
+        </h2>
+        <p class="text-slate-500 mb-2">Enter patient details</p>
+        <div class="grid grid-cols-2 gap-2">
+          <select id="prefix" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300">
+            <option value="">Select Title</option>
+            <option value="Mr.">Mr.</option>
+            <option value="Mrs.">Mrs.</option>
+            <option value="Miss">Miss</option>
+            <option value="Ms.">Ms.</option>
+            <option value="Dr.">Dr.</option>
+            <option value="Master">Master</option>
+          </select>
+          <input id="name" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="Name *" required />
+          <input id="age" type="number" min="0" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="Age" />
+          <select id="gender" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300">
+            <option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option>
+          </select>
+          <input id="phone" type="tel" maxlength="10" pattern="[0-9]{10}" class="border p-2 rounded col-span-2 bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="10‑digit mobile number *" required />
+          <input id="date" type="date" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" />
+          <select id="payment" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300">
+            <option>Cash</option><option>UPI</option><option>Card</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Test Card -->
+      <section class="bg-white rounded-2xl shadow-xl p-4 flex flex-col gap-3 border border-slate-200 w-full max-w-lg mx-auto h-[460px] overflow-hidden">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-1 flex items-center gap-2">
+          <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 014-4h3m4 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2v-1a4 4 0 014-4h1" /></svg>
+          Test Selection
+        </h2>
+        <p class="text-slate-500 mb-2">Add tests and adjust pricing</p>
+        <!-- Dropdown -->
+        <div class="flex gap-2 mb-2">
+          <select id="testSelect" class="border p-2 rounded w-full bg-slate-50 focus:ring-2 focus:ring-indigo-300"></select>
+          <button id="addBtn" class="bg-indigo-600 text-white px-4 rounded-lg shadow hover:bg-indigo-700 transition-transform hover:scale-105 active:scale-95 font-semibold flex items-center gap-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Add
+          </button>
+        </div>
+        <!-- Manual test add -->
+        <details id="customTestDetails" class="mb-2">
+          <summary class="cursor-pointer text-indigo-600 font-medium">Add custom test</summary>
+          <div class="grid grid-cols-3 gap-2 mt-2">
+            <input id="customCode" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="Code" />
+            <input id="customDesc" class="border p-2 rounded col-span-1 md:col-span-2 bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="Description" />
+            <input id="customRate" type="number" min="0" class="border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" placeholder="Rate" />
+            <button id="addCustomBtn" class="col-span-3 bg-emerald-600 text-white py-2 rounded-lg shadow hover:bg-emerald-700 transition font-semibold">Add Custom Test</button>
+          </div>
+        </details>
+        <!-- Table -->
+        <div class="flex-1 min-h-0 flex flex-col">
+          <div class="overflow-x-auto flex-1 min-h-0">
+            <table class="w-full text-left border rounded-lg" id="testTable">
+              
+            </table>
+            <div id="testTableScroll" class="flex-1 min-h-0" style="max-height: 250px; overflow-y: auto;">
+              <table class="w-full text-left border" style="table-layout: fixed;">
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- Totals -->
+        <div class="text-right mt-2 space-y-1">
+          <div><b>Subtotal:</b> <span class="text-indigo-700">₹<span id="subtotal">0</span></span></div>
+          <div><b>Discount:</b> <input id="discount" type="number" min="0" value="0" class="border p-1 w-24 text-right rounded bg-slate-50 focus:ring-2 focus:ring-indigo-300" /></div>
+          <div class="text-xl font-bold"><b>Total:</b> <span class="text-emerald-700">₹<span id="total">0</span></span></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Save -->
+    <section class="flex flex-col items-center mt-4">
+      <button id="saveBtn" class="w-full md:w-auto md:px-16 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-lg font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" /></svg>
+        Save & Generate PDF
+      </button>
+      <div id="pdfMessage" style="display:none; margin-top:1em; text-align:center;">
+        <span>Your PDF has been downloaded.</span><br>
+        <a id="pdfViewBtn" href="#" target="_blank" class="bg-indigo-600 text-white px-4 py-2 rounded mt-2 inline-block transition-transform hover:scale-105 active:scale-95">View PDF</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- PDF Modal -->
+  <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 transition-opacity opacity-0 pointer-events-none">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-xs w-full text-center">
+      <h2 class="text-lg font-semibold mb-2">PDF Downloaded</h2>
+      <p class="mb-4">Would you like to open your PDF now?</p>
+      <div class="flex justify-center gap-4 flex-wrap">
+        <button id="openPdfBtn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition">Open PDF</button>
+        <button id="sharePdfBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" style="display:none;">Share PDF</button>
+        <button id="closePdfModal" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="js/api.js"></script>
+  <script src="js/pdfGenerator.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
