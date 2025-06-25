@@ -1,5 +1,5 @@
 // --- api.js ---
-const SHEET_URL = "https://anil-diagnostics-billing-1.vercel.app/api/proxy";
+const SHEET_URL = "https://anildiagnostics.vercel.app/api/proxy";
 
 /**
  * Send bill JSON to Google Sheets via Apps Script Web App
@@ -7,14 +7,19 @@ const SHEET_URL = "https://anil-diagnostics-billing-1.vercel.app/api/proxy";
  */
 async function saveToGoogleSheet(payload) {
   try {
-    await fetch(SHEET_URL, {
+    const response = await fetch(SHEET_URL, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     });
-    console.log("✅ Saved to Google Sheet");
+
+    const data = await response.json();
+    console.log("✅ Receipt response:", data);
+    return data;
   } catch (err) {
     console.error("❌ Sheet error:", err);
+    return { success: false, error: err.message };
   }
 }
