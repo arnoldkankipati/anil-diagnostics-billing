@@ -15,47 +15,25 @@ module.exports = async (req, res) => {
     return;
   }
 
-  let body = '';
+  // Use req.body directly (Vercel/Express style)
+  const parsed = req.body;
 
   try {
-    // Read raw body stream
-    req.on('data', chunk => {
-      body += chunk;
+    const response = await fetch('https://script.google.com/macros/s/AKfycby1FvIFCs6XQGME4-R8ATw3NKnbiWP1oDqny1HH-ew8yBjU7ZinxEH0FyU0wpQPIHA0aw/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsed)
     });
 
-    req.on('end', async () => {
-      let parsed;
-      try {
-        parsed = JSON.parse(body);
-      } catch (e) {
-        res.status(400).json({ error: 'Invalid JSON body' });
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          'https://script.google.com/macros/s/AKfycby1FvIFCs6XQGME4-R8ATw3NKnbiWP1oDqny1HH-ew8yBjU7ZinxEH0FyU0wpQPIHA0aw/exec',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(parsed)
-          }
-        );
-
-        const text = await response.text();
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          data = { error: 'Invalid JSON from Apps Script', raw: text };
-        }
-
-        res.status(200).json(data);
-      } catch (err) {
-        res.status(500).json({ error: 'Proxy error', details: err.toString() });
-      }
-    });
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = { error: 'Invalid JSON from Apps Script', raw: text };
+    }
+    res.status(200).json(data);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to process request', details: err.toString() });
+    res.status(500).json({ error: 'Proxy error', details: err.toString() });
   }
 };
