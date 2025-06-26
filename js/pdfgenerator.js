@@ -129,6 +129,9 @@ function generatePDF(data) {
   doc.setPage(doc.internal.getNumberOfPages()); // Go to last page
   const currentStampPage = doc.internal.getCurrentPageInfo().pageNumber;
   if (currentStampPage === doc.internal.getNumberOfPages()) {
+    // Use a standard built-in font for the stamp
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(14);
     const stampX = pageW - margin - stampW;
     const stampY = pageH - stampH - stampBottomMargin;
     doc.setFillColor(240, 244, 255);
@@ -136,12 +139,13 @@ function generatePDF(data) {
     doc.setDrawColor(25, 55, 109); doc.setLineWidth(1.1);
     doc.roundedRect(stampX, stampY, stampW, stampH, 6, 6);
     doc.setTextColor(25, 55, 109);
-    doc.setFont('courier', 'bold'); doc.setFontSize(14);
+    // Stamp text
     const head1Y = stampY + 6;
     const head2Y = head1Y + 8;
     doc.text('ANIL',             stampX + stampW/2, head1Y, { align: 'center' });
     doc.text('DIAGNOSTICS', stampX + stampW/2, head2Y, { align: 'center' });
-    doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(70);
+    doc.setFont('courier', 'normal'); // Set normal weight for details
+    doc.setFontSize(8); doc.setTextColor(70);
     const details = [
       '(Sample Collection Centre)',
       'B.S. Maktha, Begumpet',
