@@ -130,7 +130,7 @@ function generatePDF(data) {
   const currentStampPage = doc.internal.getCurrentPageInfo().pageNumber;
   if (currentStampPage === doc.internal.getNumberOfPages()) {
     // Use a standard built-in font for the stamp
-    doc.setFont('courier', 'bold');
+    doc.setFont("helvetica", "bold"); // Use built-in Helvetica Bold for the stamp
     doc.setFontSize(14);
     const stampX = pageW - margin - stampW;
     const stampY = pageH - stampH - stampBottomMargin;
@@ -144,7 +144,7 @@ function generatePDF(data) {
     const head2Y = head1Y + 8;
     doc.text('ANIL',             stampX + stampW/2, head1Y, { align: 'center' });
     doc.text('DIAGNOSTICS', stampX + stampW/2, head2Y, { align: 'center' });
-    doc.setFont('courier', 'normal'); // Set normal weight for details
+    doc.setFont('helvetica', 'normal'); // Set normal weight for details
     doc.setFontSize(8); doc.setTextColor(70);
     const details = [
       '(Sample Collection Centre)',
